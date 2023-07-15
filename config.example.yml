@@ -1,0 +1,12 @@
+profiles:
+  - name: default
+    decrypter:
+      type: "local"
+      properties:
+        cmd: [ ".local/bin/main.js" ]
+  - name: xxx1
+    decrypter:
+      type: "remote"
+      properties:
+        baseURL: "http://localhost:8080/api/v1"
+        token: ""
