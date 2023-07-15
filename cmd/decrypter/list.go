@@ -19,23 +19,29 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package decrypter
 
 import (
-	"github.com/bonaysoft/m3u8-downloader/cmd/decrypter"
+	"github.com/bonaysoft/m3u8-downloader/internal/entity"
+	"github.com/bonaysoft/m3u8-downloader/pkg/termtable"
 	"github.com/spf13/cobra"
 )
 
-// decrypterCmd represents the decrypter command
-var decrypterCmd = &cobra.Command{
-	Use:   "decrypter",
-	Short: "Manage your decrypter",
-}
+// ListCmd represents the list command
+var ListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List all installed decrypters",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := entity.NewConfig()
+		if err != nil {
+			return err
+		}
 
-func init() {
-	rootCmd.AddCommand(decrypterCmd)
-
-	decrypterCmd.AddCommand(decrypter.ListCmd)
-	decrypterCmd.AddCommand(decrypter.InstallCmd)
-	decrypterCmd.AddCommand(decrypter.UninstallCmd)
+		rows := make([][]string, 0)
+		for _, profile := range cfg.Profiles {
+			rows = append(rows, []string{profile.Name, profile.Decrypter.Type, profile.Decrypter.Properties.String()})
+		}
+		termtable.Output([]string{"Name", "Type", "Properties"}, rows)
+		return nil
+	},
 }

@@ -19,23 +19,34 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package cmd
+package decrypter
 
 import (
-	"github.com/bonaysoft/m3u8-downloader/cmd/decrypter"
+	"github.com/bonaysoft/m3u8-downloader/internal/entity"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-// decrypterCmd represents the decrypter command
-var decrypterCmd = &cobra.Command{
-	Use:   "decrypter",
-	Short: "Manage your decrypter",
+// UninstallCmd represents the uninstall command
+var UninstallCmd = &cobra.Command{
+	Use:   "uninstall",
+	Short: "A brief description of your command",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := entity.NewConfig()
+		if err != nil {
+			return err
+		}
+
+		if err := cfg.DecrypterUninstall(viper.GetString("name")); err != nil {
+			return err
+		}
+
+		return cfg.Save()
+	},
 }
 
 func init() {
-	rootCmd.AddCommand(decrypterCmd)
+	UninstallCmd.Flags().String("name", "", "specify the name")
 
-	decrypterCmd.AddCommand(decrypter.ListCmd)
-	decrypterCmd.AddCommand(decrypter.InstallCmd)
-	decrypterCmd.AddCommand(decrypter.UninstallCmd)
+	_ = viper.BindPFlags(UninstallCmd.Flags())
 }

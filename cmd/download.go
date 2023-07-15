@@ -31,7 +31,7 @@ import (
 // downloadCmd represents the download command
 var downloadCmd = &cobra.Command{
 	Use:   "download",
-	Short: "download the specified m3u8 URL",
+	Short: "Download the specified m3u8 URL",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := entity.NewConfig()
 		if err != nil {
