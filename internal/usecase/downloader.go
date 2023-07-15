@@ -52,7 +52,6 @@ func (dl *Downloader) Download(mu *entity.M3u8URL) error {
 	switch listType {
 	case m3u8.MEDIA:
 		mediapl := playList.(*m3u8.MediaPlaylist)
-		fmt.Printf("%+v\n", mediapl)
 		for idx, seg := range mediapl.GetAllSegments() {
 			seg.URI = urifixer.MakeUp(seg.URI, u, urifixer.FixerOpt(mu.TsURLPart))
 			fmt.Printf("downloading %d: %s\n", idx, seg.URI)
@@ -63,10 +62,9 @@ func (dl *Downloader) Download(mu *entity.M3u8URL) error {
 
 	case m3u8.MASTER:
 		masterpl := playList.(*m3u8.MasterPlaylist)
-		fmt.Printf("%+v\n", masterpl)
 		for _, variant := range masterpl.Variants {
-			fmt.Println(variant)
 			if strings.HasSuffix(variant.URI, ".m3u8") {
+				fmt.Printf("Downloading the MasterPlaylist from %s\n", variant.URI)
 				if err := dl.Download(entity.NewM3u8URL(variant.URI)); err != nil {
 					return err
 				}

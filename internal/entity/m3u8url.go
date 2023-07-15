@@ -18,14 +18,9 @@ type M3u8URL struct {
 }
 
 func NewM3u8URL(v string) *M3u8URL {
-	if u, err := url.Parse(v); err == nil && strings.HasSuffix(v, "http") {
+	if u, err := url.Parse(v); err == nil && strings.HasPrefix(v, "http") {
 		return &M3u8URL{
 			PlainURL: u.String(),
-			TsURLPart: TsURLPart{
-				Host:  u.Host,
-				Path:  u.Path,
-				Query: u.RawQuery,
-			},
 		}
 	}
 

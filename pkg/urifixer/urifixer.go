@@ -13,18 +13,24 @@ type FixerOpt struct {
 }
 
 func (p *FixerOpt) apply(u *url.URL) {
-	u.Host = p.Host
+	if p.Host != "" {
+		u.Host = p.Host
+	}
+
 	if p.Path != "" {
 		u.Path = path.Join(p.Path, path.Base(u.Path))
 	}
-	query := u.Query()
-	for k, vs := range u.Query() {
-		// query[k] = append(query[k], vs...)
-		for _, v := range vs {
-			query.Set(k, v)
+
+	if p.Query != "" {
+		query := u.Query()
+		q, _ := url.ParseQuery(p.Query)
+		for k, vs := range q {
+			for _, v := range vs {
+				query.Set(k, v)
+			}
 		}
+		u.RawQuery = query.Encode()
 	}
-	u.RawQuery = query.Encode()
 }
 
 func MakeUp(uri string, pu *url.URL, opts ...FixerOpt) string {

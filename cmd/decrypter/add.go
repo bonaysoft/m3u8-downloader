@@ -68,9 +68,9 @@ var remoteQs = []*survey.Question{
 	},
 }
 
-// InstallCmd represents the install command
-var InstallCmd = &cobra.Command{
-	Use:   "install",
+// AddCmd represents the add command
+var AddCmd = &cobra.Command{
+	Use:   "add",
 	Short: "A brief description of your command",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := entity.NewConfig()
@@ -88,7 +88,9 @@ var InstallCmd = &cobra.Command{
 
 		var props entity.Properties
 		if answers.Type == "local" {
-			err = survey.AskOne(&survey.Input{Message: "Input your local cmd"}, &props.Cmd)
+			var cmdStr string
+			err = survey.AskOne(&survey.Input{Message: "Input your local cmd"}, &cmdStr)
+			props.Cmd = []string{cmdStr}
 		} else {
 			err = survey.Ask(remoteQs, &props)
 		}

@@ -27,9 +27,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-// UninstallCmd represents the uninstall command
-var UninstallCmd = &cobra.Command{
-	Use:   "uninstall",
+// DeleteCmd represents the delete command
+var DeleteCmd = &cobra.Command{
+	Use:   "delete",
 	Short: "A brief description of your command",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := entity.NewConfig()
@@ -46,7 +46,7 @@ var UninstallCmd = &cobra.Command{
 }
 
 func init() {
-	UninstallCmd.Flags().String("name", "", "specify the name")
+	DeleteCmd.Flags().String("name", "", "specify the name")
 
-	_ = viper.BindPFlags(UninstallCmd.Flags())
+	_ = viper.BindPFlags(DeleteCmd.Flags())
 }

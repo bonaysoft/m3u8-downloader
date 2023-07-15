@@ -36,6 +36,6 @@ func init() {
 	rootCmd.AddCommand(decrypterCmd)
 
 	decrypterCmd.AddCommand(decrypter.ListCmd)
-	decrypterCmd.AddCommand(decrypter.InstallCmd)
-	decrypterCmd.AddCommand(decrypter.UninstallCmd)
+	decrypterCmd.AddCommand(decrypter.AddCmd)
+	decrypterCmd.AddCommand(decrypter.DeleteCmd)
 }
