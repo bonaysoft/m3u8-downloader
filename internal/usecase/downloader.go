@@ -15,6 +15,7 @@ import (
 	"github.com/bonaysoft/m3u8-downloader/pkg/urifixer"
 	"github.com/grafov/m3u8"
 	"github.com/saltbo/gopkg/strutil"
+	"github.com/schollz/progressbar/v3"
 )
 
 type Downloader struct {
@@ -47,13 +48,17 @@ func (dl *Downloader) Download(mu *entity.M3u8URL) error {
 		}
 		defer os.RemoveAll(tsFileDir)
 
-		for idx, seg := range playlist.GetAllSegments() {
+		bar := progressbar.Default(int64(len(playlist.GetAllSegments())), "Downloading...")
+		for _, seg := range playlist.GetAllSegments() {
+			_ = bar.Add(1)
+
 			seg.URI = urifixer.MakeUp(seg.URI, u, urifixer.FixerOpt(mu.TsURLPart))
-			fmt.Printf("downloading %d: %s\n", idx, seg.URI)
 			if err := dl.download(seg, tsFileDir); err != nil {
 				return fmt.Errorf("failed to download: %s", err)
 			}
 		}
+		_ = bar.Finish()
+		fmt.Println("Download done!")
 
 		return m3u8util.Walk2Merge(tsFileDir, strings.ReplaceAll(path.Base(u.Path), ".m3u8", ".ts"))
 	}
