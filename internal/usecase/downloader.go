@@ -3,7 +3,6 @@ package usecase
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/bonaysoft/m3u8-downloader/internal/entity"
 	"github.com/bonaysoft/m3u8-downloader/pkg/aesutil"
+	"github.com/bonaysoft/m3u8-downloader/pkg/httputil"
 	"github.com/bonaysoft/m3u8-downloader/pkg/m3u8util"
 	"github.com/bonaysoft/m3u8-downloader/pkg/urifixer"
 	"github.com/grafov/m3u8"
@@ -74,7 +74,7 @@ func (dl *Downloader) Download(mu *entity.M3u8URL) error {
 
 // download DL the target seg into the specify directory
 func (dl *Downloader) download(seg *m3u8.MediaSegment, chunkTsFileDir string) error {
-	resp, err := http.Get(seg.URI)
+	resp, err := httputil.Get(seg.URI)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (dl *Downloader) download(seg *m3u8.MediaSegment, chunkTsFileDir string) er
 		chunk = decrypted
 	}
 
-	f, err := os.Create(path.Join(chunkTsFileDir, path.Base(seg.URI)))
+	f, err := os.Create(path.Join(chunkTsFileDir, fmt.Sprintf("%d.ts", seg.SeqId)))
 	if err != nil {
 		return err
 	}

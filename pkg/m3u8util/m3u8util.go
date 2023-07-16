@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"path/filepath"
 
+	"github.com/bonaysoft/m3u8-downloader/pkg/httputil"
 	"github.com/grafov/m3u8"
 )
 
 func FetchM3u8Do(m3u8Addr string, mediaPlDoFunc func(playlist *m3u8.MediaPlaylist) error, masterPlDoFunc func(playlist *m3u8.MasterPlaylist) error) error {
-	resp, err := http.Get(m3u8Addr)
+	resp, err := httputil.Get(m3u8Addr)
 	if err != nil {
 		return fmt.Errorf("failed to fetch m3u8 URL %s: %w", m3u8Addr, err)
 	}
@@ -34,7 +34,7 @@ func FetchM3u8Do(m3u8Addr string, mediaPlDoFunc func(playlist *m3u8.MediaPlaylis
 }
 
 func FetchKey(key *m3u8.Key, keyDecrypt func(rawKey []byte) ([]byte, error)) ([]byte, error) {
-	resp, err := http.Get(key.URI)
+	resp, err := httputil.Get(key.URI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch key using uri %s: %w", key.URI, err)
 	}

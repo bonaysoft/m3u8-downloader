@@ -6,6 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/grafov/m3u8 v0.12.0
+	github.com/hashicorp/go-retryablehttp v0.7.4
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/saltbo/gopkg/strutil v0.0.0-20221204054910-9488fb446c4b
 	github.com/samber/lo v1.38.1
@@ -19,6 +20,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
