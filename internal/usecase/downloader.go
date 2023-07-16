@@ -5,12 +5,16 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/bonaysoft/m3u8-downloader/internal/entity"
 	"github.com/bonaysoft/m3u8-downloader/pkg/aesutil"
+	"github.com/bonaysoft/m3u8-downloader/pkg/m3u8util"
 	"github.com/bonaysoft/m3u8-downloader/pkg/urifixer"
 	"github.com/grafov/m3u8"
+	"github.com/saltbo/gopkg/strutil"
 )
 
 type Downloader struct {
@@ -23,15 +27,7 @@ func NewDownloader(de Decrypter) *Downloader {
 	}
 }
 
-func (dl *Downloader) Fetch(m3u8Addr string) (m3u8.Playlist, m3u8.ListType, error) {
-	resp, err := http.Get(m3u8Addr)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return m3u8.DecodeFrom(resp.Body, true)
-}
-
+// Download fetch the m3u8 and download
 func (dl *Downloader) Download(mu *entity.M3u8URL) error {
 	if mu.Encrypted != "" {
 		if err := dl.de.M3u8URLDecrypt(mu); err != nil {
@@ -44,50 +40,35 @@ func (dl *Downloader) Download(mu *entity.M3u8URL) error {
 		return fmt.Errorf("failed to parse playlist: %v", err)
 	}
 
-	playList, listType, err := dl.Fetch(u.String())
-	if err != nil {
-		return fmt.Errorf("failed to fetch playlist: %v", err)
-	}
+	mediaPLFunc := func(playlist *m3u8.MediaPlaylist) error {
+		tsFileDir, err := os.MkdirTemp("", "bonaysoft-m3u8-downloader-"+strutil.Md5HexShort(u.String()))
+		if err != nil {
+			return fmt.Errorf("failed to create temporary download dir: %v", err)
+		}
+		defer os.RemoveAll(tsFileDir)
 
-	switch listType {
-	case m3u8.MEDIA:
-		mediapl := playList.(*m3u8.MediaPlaylist)
-		for idx, seg := range mediapl.GetAllSegments() {
+		for idx, seg := range playlist.GetAllSegments() {
 			seg.URI = urifixer.MakeUp(seg.URI, u, urifixer.FixerOpt(mu.TsURLPart))
 			fmt.Printf("downloading %d: %s\n", idx, seg.URI)
-			if err := dl.download(seg); err != nil {
+			if err := dl.download(seg, tsFileDir); err != nil {
 				return fmt.Errorf("failed to download: %s", err)
 			}
 		}
 
-	case m3u8.MASTER:
-		masterpl := playList.(*m3u8.MasterPlaylist)
-		for _, variant := range masterpl.Variants {
-			if strings.HasSuffix(variant.URI, ".m3u8") {
-				fmt.Printf("Downloading the MasterPlaylist from %s\n", variant.URI)
-				if err := dl.Download(entity.NewM3u8URL(variant.URI)); err != nil {
-					return err
-				}
-			}
-
-			if variant.Chunklist == nil {
-				break
-			}
-			for idx, seg := range variant.Chunklist.Segments {
-				seg.URI = urifixer.MakeUp(seg.URI, u, urifixer.FixerOpt(mu.TsURLPart))
-				fmt.Printf("downloading %d: %s\n", idx, seg.URI)
-
-				if err := dl.download(seg); err != nil {
-					return err
-				}
-			}
-		}
+		return m3u8util.Walk2Merge(tsFileDir, strings.ReplaceAll(path.Base(u.Path), ".m3u8", ".ts"))
 	}
 
-	return dl.merge()
+	masterPLFunc := func(playlist *m3u8.MasterPlaylist) error {
+		// TODO	select a variant
+		variant := playlist.Variants[0]
+		return m3u8util.FetchM3u8Do(variant.URI, mediaPLFunc, nil)
+	}
+
+	return m3u8util.FetchM3u8Do(u.String(), mediaPLFunc, masterPLFunc)
 }
 
-func (dl *Downloader) download(seg *m3u8.MediaSegment) error {
+// download DL the target seg into the specify directory
+func (dl *Downloader) download(seg *m3u8.MediaSegment, chunkTsFileDir string) error {
 	resp, err := http.Get(seg.URI)
 	if err != nil {
 		return err
@@ -110,34 +91,23 @@ func (dl *Downloader) download(seg *m3u8.MediaSegment) error {
 		chunk = decrypted
 	}
 
-	return dl.save(chunk)
+	f, err := os.Create(path.Join(chunkTsFileDir, path.Base(seg.URI)))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.Write(chunk)
+	return err
 }
 
 func (dl *Downloader) decrypt(chunk []byte, key *m3u8.Key) ([]byte, error) {
-	keyURL := dl.de.KeyURLWrapper(key.URI)
-	resp, err := http.Get(keyURL)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
+	key.URI = dl.de.KeyURLWrapper(key.URI)
 
-	rawKey, err := io.ReadAll(resp.Body)
+	keyBytes, err := m3u8util.FetchKey(key, dl.de.KeyDecrypt)
 	if err != nil {
 		return nil, err
 	}
 
-	plainKey, err := dl.de.KeyDecrypt(rawKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return aesutil.AES128Decrypt(chunk, plainKey, []byte(key.IV))
-}
-
-func (dl *Downloader) save(chunk []byte) error {
-	return nil
-}
-
-func (dl *Downloader) merge() error {
-	return nil
+	return aesutil.AES128Decrypt(chunk, keyBytes, []byte(key.IV))
 }
