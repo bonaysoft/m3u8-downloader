@@ -46,11 +46,11 @@ func MakeUp(uri string, pu *url.URL, opts ...FixerOpt) string {
 		u.Host = pu.Host
 	}
 
-	query := u.Query()
-	for k, vs := range pu.Query() {
-		query[k] = append(query[k], vs...)
+	if u.RawQuery == "" {
+		u.RawQuery = pu.RawQuery
+	} else {
+		u.RawQuery += "&" + pu.RawQuery
 	}
-	u.RawQuery = query.Encode()
 
 	for _, opt := range opts {
 		opt.apply(u)
